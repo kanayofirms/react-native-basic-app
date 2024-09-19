@@ -9,6 +9,7 @@ import {
   createUser,
   checkActiveSession,
   deleteSessions,
+  signIn,
 } from "../../lib/appwrite";
 
 const SignUp = () => {
@@ -20,24 +21,45 @@ const SignUp = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = async () => {
+  const validateForm = () => {
     if (!form.username || !form.email || !form.password) {
       Alert.alert("Error", "Please fill in all the fields");
+      return false;
     }
-    const isActiveSession = await checkActiveSession();
-    if (isActiveSession) {
-      Alert.alert("Error", "You are already signed in.");
-      return;
-    }
-    setIsSubmitting(true);
+    return true;
+  };
+
+  const submit = async () => {
+    if (!validateForm()) return;
+
     try {
-      const result = await createUser(form.email, form.password, form.username);
-      await deleteSessions(); // Delete existing sessions
-      router.replace("/home");
+      const isActiveSession = await checkActiveSession();
+      if (isActiveSession) {
+        await deleteSessions(); // Delete existing sessions
+      }
+
+      setIsSubmitting(true);
+      try {
+        const result = await createUser(
+          form.email,
+          form.password,
+          form.username
+        );
+        // Check for active sessions before signing in
+        const existingSession = await checkActiveSession();
+        if (existingSession) {
+          await deleteSessions(); // Delete existing sessions
+        }
+        const session = await signIn(form.email, form.password);
+        console.log(session);
+        router.replace("/home");
+      } catch (error) {
+        Alert.alert("Error", error.message);
+      } finally {
+        setIsSubmitting(false);
+      }
     } catch (error) {
       Alert.alert("Error", error.message);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
