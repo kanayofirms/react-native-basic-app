@@ -20,8 +20,8 @@ const Trending = ({ posts }) => {
     <FlatList
       data={posts}
       keyExtractor={(item, index) => item?.$id ?? index.toString() ?? ""} // Convert $id to string && add null check
-      renderItem={({ item }) => (
-        <Text className="text-3xl text-white">{item.id}</Text>
+      renderItem={({ item, index }) => (
+        <Text className="text-3xl text-white">{item.$id ?? index}</Text>
       )}
       horizontal
     />
